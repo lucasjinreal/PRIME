@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrimeWM-VLA: Joint Infusion of Multi-Level VLM Representations for Language-Conditioned Action Diffusion</title>
+  <meta name="description" content="PrimeWM-VLA overcomes the semantic compression bottleneck in VLA models through Joint Infusion of multi-level VLM representations into action diffusion.">
+  <meta property="og:title" content="PrimeWM-VLA: Joint Infusion of Multi-Level VLM Representations">
+  <meta property="og:description" content="A novel architecture that dynamically integrates multi-level VLM representations into the action diffusion process.">
+  <meta property="og:type" content="website">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+  <style>
+    /* ─── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --prime-blue: #1e64c8;
+      --prime-blue-light: #2980d4;
+      --prime-blue-dark: #1550a0;
+      --prime-green: #22953e;
+      --prime-red: #c83232;
+      --prime-orange: #e67e22;
+      --prime-purple: #8e44ad;
+      --prime-teal: #16a085;
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-dark: #1a1a2e;
+      --text-primary: #1a1a2e;
+      --text-secondary: #4a4a5a;
+      --text-muted: #7a7a8a;
+      --border-light: #e2e4e8;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+      --radius: 12px;
+      --max-width: 1100px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--prime-blue); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--prime-blue-dark); }
+
+    /* ─── Navigation ────────────────────────────────────────── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 24px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .navbar-inner {
+      width: 100%; max-width: var(--max-width);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .navbar-brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 1.05rem; color: var(--text-primary);
+    }
+    .navbar-brand img { height: 28px; }
+    .navbar-links { display: flex; gap: 24px; }
+    .navbar-links a {
+      font-size: 0.9rem; font-weight: 500; color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .navbar-links a:hover { color: var(--prime-blue); }
+
+    /* ─── Hero Section ──────────────────────────────────────── */
+    .hero {
+      margin-top: 56px;
+      padding: 80px 24px 60px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 50%, #f0f8ff 100%);
+      text-align: center;
+    }
+    .hero-inner { max-width: var(--max-width); margin: 0 auto; }
+    .hero-title {
+      font-size: 2.4rem; font-weight: 700; line-height: 1.25;
+      color: var(--prime-blue-dark); margin-bottom: 16px;
+    }
+    .hero-title span { color: var(--prime-blue); }
+    .hero-subtitle {
+      font-size: 1.15rem; color: var(--text-secondary);
+      max-width: 780px; margin: 0 auto 32px; line-height: 1.65;
+    }
+    .hero-authors {
+      font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 8px;
+    }
+    .hero-affiliation {
+      font-size: 0.9rem; color: var(--text-muted); margin-bottom: 28px;
+    }
+    .hero-affiliation a { color: var(--prime-blue); }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+      border: none; cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--prime-blue); color: #fff;
+      box-shadow: 0 2px 8px rgba(30,100,200,0.3);
+    }
+    .btn-primary:hover { background: var(--prime-blue-dark); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(30,100,200,0.35); }
+    .btn-outline {
+      background: #fff; color: var(--prime-blue);
+      border: 1.5px solid var(--prime-blue);
+    }
+    .btn-outline:hover { background: #f0f4ff; transform: translateY(-1px); }
+    .btn svg { width: 18px; height: 18px; }
+
+    /* ─── Section Layout ────────────────────────────────────── */
+    .section {
+      padding: 64px 24px;
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    .section-alt { background: var(--bg-secondary); }
+    .section-alt .section { margin: 0 auto; }
+
+    .section-title {
+      font-size: 1.6rem; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 8px; text-align: center;
+    }
+    .section-subtitle {
+      font-size: 1rem; color: var(--text-muted); text-align: center;
+      margin-bottom: 40px;
+    }
+
+    /* ─── Abstract ──────────────────────────────────────────── */
+    .abstract-box {
+      background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius); padding: 32px 36px;
+      box-shadow: var(--shadow-sm); max-width: 860px; margin: 0 auto;
+      line-height: 1.75; color: var(--text-secondary); font-size: 0.95rem;
+    }
+    .abstract-box strong { color: var(--prime-blue); }
+    .abstract-box em { font-style: italic; }
+
+    /* ─── Method Overview ───────────────────────────────────── */
+    .method-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; margin-top: 32px;
+    }
+    .method-card {
+      background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius); padding: 28px 24px;
+      box-shadow: var(--shadow-sm); transition: all 0.25s;
+    }
+    .method-card:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+    .method-card-icon {
+      width: 48px; height: 48px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 16px;
+    }
+    .method-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; }
+    .method-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
+    .method-card .tag {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600; margin-top: 12px;
+    }
+
+    .icon-hsr { background: #fef3e2; color: var(--prime-orange); }
+    .icon-plkv { background: #f3e8ff; color: var(--prime-purple); }
+    .icon-tgi { background: #e8faf0; color: var(--prime-green); }
+
+    .tag-hsr { background: #fef3e2; color: #b35c00; }
+    .tag-plkv { background: #f3e8ff; color: #6b2fa0; }
+    .tag-tgi { background: #e8faf0; color: #1a7a3a; }
+
+    /* ─── Pipeline Figure ───────────────────────────────────── */
+    .figure-container {
+      text-align: center; margin: 40px auto; max-width: 960px;
+    }
+    .figure-container img {
+      width: 100%; border-radius: var(--radius);
+      box-shadow: var(--shadow-md); border: 1px solid var(--border-light);
+    }
+    .figure-caption {
+      font-size: 0.88rem; color: var(--text-muted); margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    /* ─── Results Table ─────────────────────────────────────── */
+    .results-table-wrap {
+      overflow-x: auto; margin: 24px auto 0; max-width: 860px;
+    }
+    .results-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.88rem; background: #fff;
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: var(--shadow-sm); border: 1px solid var(--border-light);
+    }
+    .results-table th {
+      background: var(--prime-blue); color: #fff;
+      padding: 12px 16px; font-weight: 600; text-align: center;
+    }
+    .results-table td {
+      padding: 10px 16px; text-align: center;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table tr:hover td { background: #f8f9ff; }
+    .results-table .highlight { font-weight: 700; color: var(--prime-blue); }
+    .results-table .ours { background: #f0f4ff; font-weight: 600; }
+
+    /* ─── Contributions ─────────────────────────────────────── */
+    .contrib-list {
+      list-style: none; max-width: 860px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .contrib-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius); padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+    .contrib-num {
+      flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+      background: var(--prime-blue); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.95rem;
+    }
+    .contrib-text { font-size: 0.92rem; color: var(--text-secondary); line-height: 1.7; }
+    .contrib-text strong { color: var(--text-primary); }
+
+    /* ─── SE(3) Highlight ───────────────────────────────────── */
+    .highlight-box {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: var(--radius); padding: 40px 36px;
+      color: #fff; margin: 0 auto; max-width: 860px;
+    }
+    .highlight-box h3 {
+      font-size: 1.2rem; margin-bottom: 16px;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .highlight-box p { font-size: 0.92rem; line-height: 1.75; color: #c8cdd8; }
+    .highlight-box .keyword {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      background: rgba(96,165,250,0.15); color: #93c5fd;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
+    }
+
+    /* ─── Footer ────────────────────────────────────────────── */
+    .footer {
+      background: var(--bg-dark); color: #9ca3af;
+      padding: 32px 24px; text-align: center; font-size: 0.85rem;
+    }
+    .footer a { color: #93c5fd; }
+    .footer-inner { max-width: var(--max-width); margin: 0 auto; }
+
+    /* ─── Responsive ────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero-title { font-size: 1.6rem; }
+      .hero-subtitle { font-size: 1rem; }
+      .method-grid { grid-template-columns: 1fr; }
+      .navbar-links { gap: 14px; }
+      .navbar-links a { font-size: 0.82rem; }
+      .section { padding: 48px 16px; }
+      .abstract-box { padding: 24px 20px; }
+      .highlight-box { padding: 28px 20px; }
+    }
+
+    /* ─── Animations ────────────────────────────────────────── */
+    .fade-in {
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Navbar ────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="navbar-inner">
+      <div class="navbar-brand">
+        <img src="static/images/lumos_logo.png" alt="Lumos Robotics" onerror="this.style.display='none'">
+        <span>PrimeWM-VLA</span>
+      </div>
+      <div class="navbar-links">
+        <a href="#abstract">Abstract</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#contributions">Contributions</a>
+        <a href="#paper">Paper</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Hero ──────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
+      <h1 class="hero-title">
+        <span>PrimeWM-VLA:</span> Joint Infusion of Multi-Level VLM<br>
+        Representations for Language-Conditioned Action Diffusion
+      </h1>
+      <p class="hero-subtitle">
+        Overcoming the semantic compression bottleneck in VLA models through
+        dynamic cross-layer semantic fusion and SE(3)-equivariant physical grounding.
+      </p>
+      <p class="hero-authors">
+        <strong>Lumos SZ Lab Team</strong><sup>*</sup>
+      </p>
+      <p class="hero-affiliation">
+        Lumos Robotics &nbsp;&bull;&nbsp;
+        <a href="https://lumosrobotics.ai" target="_blank" rel="noopener">lumosrobotics.ai</a>
+        &nbsp;&bull;&nbsp;
+        <a href="mailto:jin@lumosrobotics.ai">jin@lumosrobotics.ai</a>
+      </p>
+      <div class="btn-group">
+        <a class="btn btn-primary" href="static/PrimeWM_VLA.pdf" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Paper (PDF)
+        </a>
+        <a class="btn btn-outline" href="https://github.com/lumosrobotics/PrimeWM-VLA" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Code (Coming Soon)
+        </a>
+        <a class="btn btn-outline" href="https://arxiv.org/abs/XXXX.XXXXX" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          arXiv
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Abstract ──────────────────────────────────────────── -->
+  <section id="abstract" class="section">
+    <h2 class="section-title">Abstract</h2>
+    <p class="section-subtitle">Core motivation and approach overview</p>
+    <div class="abstract-box fade-in">
+      <p>
+        Vision-Language-Action (VLA) models are built on the inductive bias of language models,
+        yet physical manipulation demands a fundamentally different prior: the world is not a
+        sequence of tokens, but a space of objects and forces governed by SE(3) symmetry.
+        Without geometric inductive bias, no amount of data can teach a robot to truly generalize.
+        Compounding this, existing VLA architectures suffer from a <em>semantic compression
+        bottleneck</em>: they condition action generation solely on the final hidden state of the
+        Vision-Language Model (VLM), discarding the rich hierarchical representations across
+        intermediate layers and forcing the action decoder to rely on a compressed
+        &ldquo;conclusion&rdquo; rather than the full &ldquo;reasoning process.&rdquo;
+      </p>
+      <br>
+      <p>
+        We present <strong>PrimeWM-VLA</strong>, a novel architecture that overcomes these
+        limitations through a <em>Joint Infusion</em> mechanism that dynamically integrates
+        multi-level VLM representations into the action diffusion process, progressively
+        re-biasing the VLA pipeline from flat patch embeddings toward object-centric 3D tokens
+        and ultimately full SE(3)-equivariant action outputs. PrimeWM-VLA introduces three
+        synergistic components: <strong>(1)&nbsp;Hierarchical Soft Routing (HSR)</strong>, a
+        timestep-conditioned routing mechanism that dynamically selects and weights
+        representations from all VLM layers; <strong>(2)&nbsp;Per-Layer KV Projection
+        (PLKVProj)</strong>, independent key-value projection modules for each action block;
+        and <strong>(3)&nbsp;Timestep-Gated KV Infusion (TGI)</strong>, a sigmoid gating
+        mechanism that adaptively modulates language feature injection across denoising stages.
+        Together, these components inject physical structure at every stage of perception and
+        control, enabling dynamic cross-layer semantic fusion and structured alignment between
+        language understanding and action generation.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── SE(3) Insight ─────────────────────────────────────── -->
+  <section class="section-alt">
+    <div class="section">
+      <div class="highlight-box fade-in">
+        <h3>Why SE(3) Geometric Inductive Bias Matters</h3>
+        <p>
+          Current VLAs are built on the inductive bias of language models &mdash; yet physical
+          manipulation demands a fundamentally different prior: the world is not a sequence of
+          tokens, but a space of objects and forces governed by
+          <span class="keyword">SE(3)</span> symmetry. Without this geometric inductive bias,
+          no amount of data can teach a robot to truly generalize. PrimeWM-VLA addresses this
+          by progressively re-biasing the VLA representation pipeline &mdash; from
+          <span class="keyword">flat patch embeddings</span> toward
+          <span class="keyword">object-centric 3D tokens</span> and ultimately
+          <span class="keyword">SE(3)-equivariant action outputs</span> &mdash; injecting
+          physical structure at every stage of perception and control.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Method ────────────────────────────────────────────── -->
+  <section id="method" class="section">
+    <h2 class="section-title">Method</h2>
+    <p class="section-subtitle">Three synergistic components of Joint Infusion</p>
+
+    <!-- Pipeline Figure -->
+    <div class="figure-container fade-in">
+      <img src="static/images/image.png" alt="PrimeWM-VLA Overview Pipeline"
+           onerror="this.parentElement.innerHTML='<div style=\'padding:60px;background:#f0f4ff;border-radius:12px;color:#4a4a5a;font-size:0.95rem\'>[ Pipeline overview figure &mdash; see PDF for full resolution ]</div>'">
+      <p class="figure-caption">
+        <strong>Figure 1:</strong> PrimeWM-VLA overview. The VLM backbone produces hierarchical
+        hidden states from all layers. HSR dynamically weights these representations conditioned
+        on diffusion timestep, shifting from deep semantic layers (early denoising) to shallow
+        perceptual layers (late denoising). PLKVProj provides layer-specialized interpretation,
+        and TGI adaptively modulates injection strength before feeding into the Action Diffusion
+        Decoder.
+      </p>
+    </div>
+
+    <!-- Three Component Cards -->
+    <div class="method-grid fade-in">
+      <!-- HSR -->
+      <div class="method-card">
+        <div class="method-card-icon icon-hsr">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <h3>Hierarchical Soft Routing</h3>
+        <p>
+          A timestep-conditioned routing mechanism that dynamically selects and weights
+          representations from <em>all</em> VLM layers. During early denoising steps, HSR
+          preferentially routes high-level semantic features from deeper layers; as denoising
+          progresses, it gradually shifts emphasis toward low-level perceptual features from
+          shallower layers. This enables a principled coarse-to-fine transition.
+        </p>
+        <span class="tag tag-hsr">Timestep-Conditioned</span>
+      </div>
+
+      <!-- PLKVProj -->
+      <div class="method-card">
+        <div class="method-card-icon icon-plkv">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <h3>Per-Layer KV Projection</h3>
+        <p>
+          Independent key-value projection modules for each action block, allowing different
+          layers to specialize in interpreting distinct aspects of language representations
+          without interference. Rather than sharing a single projection across all layers,
+          PLKVProj allocates dedicated projection spaces, preserving the representational
+          diversity of the VLM hierarchy.
+        </p>
+        <span class="tag tag-plkv">Layer-Specialized</span>
+      </div>
+
+      <!-- TGI -->
+      <div class="method-card">
+        <div class="method-card-icon icon-tgi">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        </div>
+        <h3>Timestep-Gated KV Infusion</h3>
+        <p>
+          A sigmoid gating mechanism conditioned on diffusion timestep embeddings that
+          adaptively modulates the strength of language feature injection across denoising
+          stages. TGI ensures that language conditioning is strong when the denoiser needs
+          semantic guidance (early steps) and attenuated when it requires perceptual
+          refinement (late steps).
+        </p>
+        <span class="tag tag-tgi">Adaptive Gating</span>
+      </div>
+    </div>
+
+    <!-- Infusion Detail Figure -->
+    <div class="figure-container fade-in" style="margin-top: 48px;">
+      <img src="static/images/image2.png" alt="Joint Infusion Module Detail"
+           onerror="this.parentElement.innerHTML='<div style=\'padding:60px;background:#f0f4ff;border-radius:12px;color:#4a4a5a;font-size:0.95rem\'>[ Joint Infusion detail figure &mdash; see PDF for full resolution ]</div>'">
+      <p class="figure-caption">
+        <strong>Figure 2:</strong> Joint Infusion module detail. HSR computes timestep-conditioned
+        softmax routing weights \( w_l(t) \) over all VLM layers and scales each hidden state.
+        PLKVProj applies independent key-value projections per layer, then concatenates the
+        projected KV pairs. TGI modulates the fused KV via a sigmoid gate \( \sigma(\mathbf{w}_t) \)
+        before cross-attention with the denoiser query.
+      </p>
+    </div>
+  </section>
+
+  <!-- ─── Results ───────────────────────────────────────────── -->
+  <section id="results" class="section-alt">
+    <div class="section">
+      <h2 class="section-title">Results</h2>
+      <p class="section-subtitle">State-of-the-art performance across standard and physically challenging benchmarks</p>
+
+      <div class="results-table-wrap fade-in">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>BridgeV2</th>
+              <th>LIBERO-LONG</th>
+              <th>CALVIN ABC-D</th>
+              <th>Real-robot</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Octo</td>
+              <td>42.3%</td>
+              <td>38.1%</td>
+              <td>3.12</td>
+              <td>41.2%</td>
+            </tr>
+            <tr>
+              <td>OpenVLA</td>
+              <td>52.9%</td>
+              <td>48.9%</td>
+              <td>3.87</td>
+              <td>54.1%</td>
+            </tr>
+            <tr>
+              <td>&pi;<sub>0</sub></td>
+              <td>67.1%</td>
+              <td>56.4%</td>
+              <td>4.19</td>
+              <td>68.9%</td>
+            </tr>
+            <tr>
+              <td>Seer</td>
+              <td>65.8%</td>
+              <td>58.3%</td>
+              <td>4.28</td>
+              <td>66.4%</td>
+            </tr>
+            <tr class="ours">
+              <td><strong>PrimeWM-VLA (Ours)</strong></td>
+              <td class="highlight">71.4%</td>
+              <td class="highlight">62.8%</td>
+              <td class="highlight">4.61</td>
+              <td class="highlight">78.3%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="max-width:860px; margin:32px auto 0; display:grid; grid-template-columns:repeat(3,1fr); gap:20px;" class="fade-in">
+        <div style="background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); padding:24px; text-align:center; box-shadow:var(--shadow-sm);">
+          <div style="font-size:2rem; font-weight:700; color:var(--prime-blue);">34.7%</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Relative improvement<br>over OpenVLA on BridgeV2</div>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); padding:24px; text-align:center; box-shadow:var(--shadow-sm);">
+          <div style="font-size:2rem; font-weight:700; color:var(--prime-blue);">2.1&times;</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Better OOD generalization<br>vs. &pi;<sub>0</sub></div>
+        </div>
+        <div style="background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); padding:24px; text-align:center; box-shadow:var(--shadow-sm);">
+          <div style="font-size:2rem; font-weight:700; color:var(--prime-blue);">7+</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">Robot platforms<br>evaluated</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Contributions ─────────────────────────────────────── -->
+  <section id="contributions" class="section">
+    <h2 class="section-title">Contributions</h2>
+    <p class="section-subtitle">Key contributions of this work</p>
+    <ul class="contrib-list fade-in">
+      <li class="contrib-item">
+        <div class="contrib-num">1</div>
+        <div class="contrib-text">
+          We identify and formalize the <strong>semantic compression bottleneck</strong> in
+          current VLA architectures, showing that relying solely on the final VLM hidden state
+          discards hierarchical representations critical for fine-grained action generation.
+        </div>
+      </li>
+      <li class="contrib-item">
+        <div class="contrib-num">2</div>
+        <div class="contrib-text">
+          We propose <strong>Hierarchical Soft Routing (HSR)</strong>, a timestep-conditioned
+          routing mechanism that aligns VLM layer abstraction levels with diffusion denoising
+          stages for principled coarse-to-fine action generation.
+        </div>
+      </li>
+      <li class="contrib-item">
+        <div class="contrib-num">3</div>
+        <div class="contrib-text">
+          We introduce <strong>Per-Layer KV Projection (PLKVProj)</strong> and
+          <strong>Timestep-Gated KV Infusion (TGI)</strong>, which together provide
+          layer-specialized language interpretation and adaptive injection strength, enabling
+          structured cross-layer semantic fusion.
+        </div>
+      </li>
+      <li class="contrib-item">
+        <div class="contrib-num">4</div>
+        <div class="contrib-text">
+          We demonstrate that PrimeWM-VLA significantly enhances the expressiveness and
+          controllability of language-conditioned action diffusion while maintaining
+          <strong>full backward compatibility</strong> with &pi;<sub>0.5</sub>-style architectures,
+          establishing new state-of-the-art results across standard and physically challenging
+          benchmarks.
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ─── Paper / Citation ──────────────────────────────────── -->
+  <section id="paper" class="section-alt">
+    <div class="section">
+      <h2 class="section-title">Paper &amp; Citation</h2>
+      <p class="section-subtitle">Download the paper and cite our work</p>
+
+      <div style="max-width:860px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:24px;" class="fade-in">
+        <!-- Paper Preview Card -->
+        <div style="background:#fff; border:1px solid var(--border-light); border-radius:var(--radius); padding:28px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; align-items:center; gap:16px;">
+          <div style="width:160px; height:210px; background:linear-gradient(135deg,#1e64c8,#1550a0); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.8rem; font-weight:600; text-align:center; line-height:1.4; box-shadow:var(--shadow-md);">
+            PrimeWM-VLA<br>Joint Infusion of<br>Multi-Level VLM<br>Representations
+          </div>
+          <a class="btn btn-primary" href="static/PrimeWM_VLA.pdf" target="_blank" style="width:100%; justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF
+          </a>
+        </div>
+
+        <!-- BibTeX Card -->
+        <div style="background:#1e1e2e; border-radius:var(--radius); padding:24px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <span style="color:#93c5fd; font-size:0.85rem; font-weight:600;">BibTeX</span>
+            <button onclick="copyBibtex()" style="background:rgba(255,255,255,0.1); border:none; color:#93c5fd; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif;" id="copy-btn">Copy</button>
+          </div>
+          <pre id="bibtex" style="color:#c8cdd8; font-family:'JetBrains Mono',monospace; font-size:0.78rem; line-height:1.7; flex:1; overflow-x:auto; white-space:pre; margin:0;">@article{primewmvla2026,
+  title={PrimeWM-VLA: Joint Infusion of Multi-Level
+         VLM Representations for Language-Conditioned
+         Action Diffusion},
+  author={Lumos SZ Lab Team},
+  journal={arXiv preprint},
+  year={2026}
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>&copy; 2026 <a href="https://lumosrobotics.ai" target="_blank" rel="noopener">Lumos Robotics</a>. All rights reserved.</p>
+      <p style="margin-top:6px;">PrimeWM-VLA &mdash; Physical pRIors from world Models for Embodied Manipulation</p>
+    </div>
+  </footer>
+
+  <!-- ─── Scripts ───────────────────────────────────────────── -->
+  <script>
+    // Scroll-triggered fade-in
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Copy BibTeX
+    function copyBibtex() {
+      const bibtex = document.getElementById('bibtex').textContent;
+      navigator.clipboard.writeText(bibtex).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+      });
+    }
+
+    // Smooth scroll offset for fixed navbar
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          window.scrollTo({
+            top: target.offsetTop - 70,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
