@@ -492,6 +492,7 @@
       font-size: 0.82rem;
       background: var(--bg-card);
       border: 1px solid var(--border);
+      min-width: 760px;
     }
 
     .results-table th {
@@ -524,9 +525,35 @@
       color: var(--accent);
     }
 
+    .results-table .second {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      font-weight: 600;
+    }
+
     .results-table .ours {
       background: rgba(189, 93, 58, 0.08);
       font-weight: 600;
+    }
+
+    .table-caption {
+      margin: 28px 0 10px;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .table-caption strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .results-note {
+      margin: 20px auto 0;
+      color: var(--text-light);
+      font-size: 0.9rem;
+      line-height: 1.75;
     }
 
     /* Stats row */
@@ -1035,69 +1062,212 @@
       <h2 class="section-title">Results</h2>
       <p class="section-subtitle">State-of-the-art performance across standard and physically challenging benchmarks</p>
 
+      <p class="table-caption fade-in">
+        <strong>Table 1:</strong> LIBERO benchmark comparison. All numbers are task success
+        rates (%). Best results are bold, second-best results are underlined.
+      </p>
       <div class="results-table-wrap fade-in">
         <table class="results-table">
           <thead>
             <tr>
               <th>Method</th>
-              <th>BridgeV2</th>
-              <th>LIBERO-LONG</th>
-              <th>CALVIN ABC-D</th>
-              <th>Real-robot</th>
+              <th>LIBERO-Spatial</th>
+              <th>LIBERO-Object</th>
+              <th>LIBERO-Goal</th>
+              <th>LIBERO-Long</th>
+              <th>Average</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>Octo</td>
-              <td>42.3%</td>
-              <td>38.1%</td>
-              <td>3.12</td>
-              <td>41.2%</td>
+              <td>OpenVLA [15]</td>
+              <td>84.7</td>
+              <td>88.4</td>
+              <td>79.2</td>
+              <td>53.7</td>
+              <td>76.5</td>
             </tr>
             <tr>
-              <td>OpenVLA</td>
-              <td>52.9%</td>
-              <td>48.9%</td>
-              <td>3.87</td>
-              <td>54.1%</td>
+              <td>&pi;<sub>0</sub>-FAST [27]</td>
+              <td>96.4</td>
+              <td>96.8</td>
+              <td>88.6</td>
+              <td>60.2</td>
+              <td>85.5</td>
             </tr>
             <tr>
-              <td>&pi;<sub>0</sub></td>
-              <td>67.1%</td>
-              <td>56.4%</td>
-              <td>4.19</td>
-              <td>68.9%</td>
+              <td>GR00T-N1 [25]</td>
+              <td>94.4</td>
+              <td>97.6</td>
+              <td>93.0</td>
+              <td>90.6</td>
+              <td>93.9</td>
             </tr>
             <tr>
-              <td>Seer</td>
-              <td>65.8%</td>
-              <td>58.3%</td>
-              <td>4.28</td>
-              <td>66.4%</td>
+              <td>&pi;<sub>0</sub> [5]</td>
+              <td>96.8</td>
+              <td>98.8</td>
+              <td>95.8</td>
+              <td>85.2</td>
+              <td>94.2</td>
+            </tr>
+            <tr>
+              <td>UniVLA [7]</td>
+              <td>95.4</td>
+              <td>98.8</td>
+              <td>93.6</td>
+              <td>94.0</td>
+              <td>95.5</td>
+            </tr>
+            <tr>
+              <td>Discrete Diffusion VLA [19]</td>
+              <td>97.2</td>
+              <td>98.6</td>
+              <td>97.4</td>
+              <td>92.0</td>
+              <td>96.3</td>
+            </tr>
+            <tr>
+              <td>OpenVLA-OFT [16]</td>
+              <td>97.6</td>
+              <td>98.4</td>
+              <td>97.9</td>
+              <td>94.5</td>
+              <td>97.1</td>
+            </tr>
+            <tr>
+              <td>MemoryVLA [32]</td>
+              <td>98.4</td>
+              <td>98.4</td>
+              <td>96.4</td>
+              <td>93.4</td>
+              <td>96.7</td>
+            </tr>
+            <tr>
+              <td>&pi;<sub>0.5</sub> [28]</td>
+              <td class="second">98.8</td>
+              <td>98.2</td>
+              <td>98.0</td>
+              <td>92.4</td>
+              <td>96.9</td>
+            </tr>
+            <tr>
+              <td>FLOWER [30]</td>
+              <td>97.5</td>
+              <td>99.1</td>
+              <td>96.1</td>
+              <td class="second">94.9</td>
+              <td>96.9</td>
+            </tr>
+            <tr>
+              <td>EO-1 [29]</td>
+              <td class="highlight"><strong>99.7</strong></td>
+              <td class="second">99.8</td>
+              <td class="highlight"><strong>99.2</strong></td>
+              <td>94.8</td>
+              <td class="second">98.2</td>
             </tr>
             <tr class="ours">
-              <td><strong>PrimeWM-VLA (Ours)</strong></td>
-              <td class="highlight">71.4%</td>
-              <td class="highlight">62.8%</td>
-              <td class="highlight">4.61</td>
-              <td class="highlight">78.3%</td>
+              <td><strong>PRIME (Ours)</strong></td>
+              <td class="second">98.8</td>
+              <td class="highlight"><strong>100.0</strong></td>
+              <td class="second">99.0</td>
+              <td class="highlight"><strong>98.6</strong></td>
+              <td class="highlight"><strong>99.1</strong></td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <p class="results-note fade-in">
+        PRIME achieves the highest average success rate across the four LIBERO suites,
+        surpassing the previous best EO-1 by 0.9 percentage points. The largest gain appears
+        on LIBERO-Long, where PRIME reaches 98.6% and improves over EO-1 by 3.8 percentage
+        points, indicating stronger long-horizon reasoning. On LIBERO-Object, PRIME achieves
+        a perfect 100.0% success rate.
+      </p>
+
+      <p class="table-caption fade-in">
+        <strong>Table 2:</strong> Real-robot in-house task comparison. All methods are evaluated
+        on the same physical hardware under identical conditions. Numbers are task success rates (%).
+      </p>
+      <div class="results-table-wrap fade-in">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>OpenVLA</th>
+              <th>GR00T-N1.6</th>
+              <th>&pi;<sub>0.5</sub></th>
+              <th>PRIME</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Pick-and-place</td>
+              <td>39.1</td>
+              <td>75.3</td>
+              <td class="second">81.4</td>
+              <td class="highlight"><strong>93.7</strong></td>
+            </tr>
+            <tr>
+              <td>Stacking</td>
+              <td>25.2</td>
+              <td>61.8</td>
+              <td class="second">67.9</td>
+              <td class="highlight"><strong>70.1</strong></td>
+            </tr>
+            <tr>
+              <td>Cloth folding</td>
+              <td>4.6</td>
+              <td>21.2</td>
+              <td class="second">85.4</td>
+              <td class="highlight"><strong>89.1</strong></td>
+            </tr>
+            <tr>
+              <td>Small obj. grasp</td>
+              <td>8.3</td>
+              <td>26.7</td>
+              <td class="second">59.2</td>
+              <td class="highlight"><strong>61.8</strong></td>
+            </tr>
+            <tr>
+              <td>Assembly</td>
+              <td>1.4</td>
+              <td>22.1</td>
+              <td class="second">51.8</td>
+              <td class="highlight"><strong>75.9</strong></td>
+            </tr>
+            <tr class="ours">
+              <td><strong>Average</strong></td>
+              <td>15.7</td>
+              <td>41.4</td>
+              <td class="second">69.1</td>
+              <td class="highlight"><strong>78.1</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="results-note fade-in">
+        On real-robot tasks, PRIME reaches a 78.1% average success rate, outperforming
+        &pi;<sub>0.5</sub> by 9.0 percentage points and OpenVLA by 62.4 percentage points.
+        Gains are especially clear on assembly, pick-and-place, and cloth folding, where
+        physical priors help with contact-rich and deformable-object manipulation.
+      </p>
+
       <div class="stats-grid fade-in">
         <div class="stat-card">
-          <div class="stat-value">34.7%</div>
-          <div class="stat-label">Relative improvement<br>over OpenVLA on BridgeV2</div>
+          <div class="stat-value">99.1%</div>
+          <div class="stat-label">Average success<br>across LIBERO suites</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">2.1&times;</div>
-          <div class="stat-label">Better OOD generalization<br>vs. &pi;<sub>0</sub></div>
+          <div class="stat-value">100.0%</div>
+          <div class="stat-label">Success rate<br>on LIBERO-Object</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">7+</div>
-          <div class="stat-label">Robot platforms<br>evaluated</div>
+          <div class="stat-value">78.1%</div>
+          <div class="stat-label">Average success<br>on real-robot tasks</div>
         </div>
       </div>
     </div>
